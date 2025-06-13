@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ISE Theaters Indoor Navigation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+    #controls {
+      margin-bottom: 10px;
+    }
+    #controls input {
+      padding: 6px;
+      font-size: 14px;
+      width: 180px;
+    }
+    #controls button {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    #message {
+      margin-top: 8px;
+      color: green;
+      font-weight: bold;
+    }
+
+    /* Container for the seating chart + overlay canvas + labels */
+    #floorplan-container {
+      position: relative;
+      display: inline-block;
+      border: 2px solid #333;
+      margin: 20px auto;
+      background: white;
+    }
+
+    /* Screen & Entrance labels */
+    .map-label {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: bold;
+      color: #333;
+      font-size: 14px;
+      background: white;
+      padding: 2px 6px;
+      white-space: nowrap;
+    }
+    .screen-label {
+      top: -16px;
+    }
+    .screen-label::before {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background: gold;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .entrance-label {
+      bottom: -16px;
+    }
+    .entrance-label::before {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background: #28a745;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    /* Seating chart table styling */
+    #floorplan-container table {
+      border-collapse: collapse;
+      margin: 0;
+    }
+    #floorplan-container th,
+    #floorplan-container td {
+      border: 1px solid #999;
+      padding: 4px;
+      text-align: center;
+    }
+    #floorplan-container th {
+      background-color: #f0f0f0;
+    }
+    .seat-btn {
+      width: 40px;
+      height: 40px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: default;
+    }
+
+    /* Canvas overlay */
+    #pathcanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>ISE Theaters Indoor Navigation</h1>
+
+  <div id="controls">
+    <input id="ticketIdInput" placeholder="e.g. AP53ASP1" />
+    <button id="btnNavigate">Navigate</button>
+  </div>
+  <div id="message"></div>
+
+  <div id="floorplan-container">
+    <!-- SCREEN label -->
+    <div class="map-label screen-label">SCREEN</div>
+
+    <!-- Seating-chart HTML -->
+    <table id="floorplan">
+      <thead>
+        <tr>
+          <th></th>
+          <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+          <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong></td>
+          <td><button class="seat-btn" data-seat="A1">A1</button></td>
+          <td><button class="seat-btn" data-seat="A2">A2</button></td>
+          <td><button class="seat-btn" data-seat="A3">A3</button></td>
+          <td><button class="seat-btn" data-seat="A4">A4</button></td>
+          <td><button class="seat-btn" data-seat="A5">A5</button></td>
+          <td><button class="seat-btn" data-seat="A6">A6</button></td>
+          <td><button class="seat-btn" data-seat="A7">A7</button></td>
+          <td><button class="seat-btn" data-seat="A8">A8</button></td>
+          <td><button class="seat-btn" data-seat="A9">A9</button></td>
+          <td><button class="seat-btn" data-seat="A10">A10</button></td>
+        </tr>
+        <tr>
+          <td><strong>B</strong></td>
+          <td><button class="seat-btn" data-seat="B1">B1</button></td>
+          <td><button class="seat-btn" data-seat="B2">B2</button></td>
+          <td><button class="seat-btn" data-seat="B3">B3</button></td>
+          <td><button class="seat-btn" data-seat="B4">B4</button></td>
+          <td><button class="seat-btn" data-seat="B5">B5</button></td>
+          <td><button class="seat-btn" data-seat="B6">B6</button></td>
+          <td><button class="seat-btn" data-seat="B7">B7</button></td>
+          <td><button class="seat-btn" data-seat="B8">B8</button></td>
+          <td><button class="seat-btn" data-seat="B9">B9</button></td>
+          <td><button class="seat-btn" data-seat="B10">B10</button></td>
+        </tr>
+        <tr>
+          <td><strong>C</strong></td>
+          <td><button class="seat-btn" data-seat="C1">C1</button></td>
+          <td><button class="seat-btn" data-seat="C2">C2</button></td>
+          <td><button class="seat-btn" data-seat="C3">C3</button></td>
+          <td><button class="seat-btn" data-seat="C4">C4</button></td>
+          <td><button class="seat-btn" data-seat="C5">C5</button></td>
+          <td><button class="seat-btn" data-seat="C6">C6</button></td>
+          <td><button class="seat-btn" data-seat="C7">C7</button></td>
+          <td><button class="seat-btn" data-seat="C8">C8</button></td>
+          <td><button class="seat-btn" data-seat="C9">C9</button></td>
+          <td><button class="seat-btn" data-seat="C10">C10</button></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ENTRANCE label -->
+    <div class="map-label entrance-label">ENTRANCE</div>
+
+    <!-- Overlay canvas -->
+    <canvas id="pathcanvas"></canvas>
+  </div>
+
+  <script>
+    // Utility: Load reservations
+    function loadReservations() {
+      const data = localStorage.getItem('reservations');
+      try { return JSON.parse(data) || []; }
+      catch { return []; }
+    }
+
+    // Canvas setup
+    const container = document.getElementById('floorplan-container');
+    const canvas    = document.getElementById('pathcanvas');
+    const ctx       = canvas.getContext('2d');
+    window.addEventListener('load', () => {
+      canvas.width  = container.clientWidth;
+      canvas.height = container.clientHeight;
+    });
+
+    // Draw an arrow with green fill & dark-green stroke
+    function drawArrow(x1, y1, x2, y2, fillColor = '#28a745', strokeColor = '#004d00') {
+      const headLen = 8;
+      const dx = x2 - x1, dy = y2 - y1;
+      const angle = Math.atan2(dy, dx);
+
+      ctx.lineWidth   = 3;
+      ctx.setLineDash([]);
+      ctx.strokeStyle = strokeColor;
+      ctx.fillStyle   = fillColor;
+
+      // shaft
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      // head
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(
+        x2 - headLen * Math.cos(angle - Math.PI/6),
+        y2 - headLen * Math.sin(angle - Math.PI/6)
+      );
+      ctx.lineTo(
+        x2 - headLen * Math.cos(angle + Math.PI/6),
+        y2 - headLen * Math.sin(angle + Math.PI/6)
+      );
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Navigate to display a 3-segment path that skirts the seat
+    function navigateTo(seatId) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // entrance at bottom-center
+      const entX = canvas.width / 2;
+      const entY = canvas.height;
+
+      // find seat element center + top Y
+      const seatEl   = container.querySelector(`[data-seat="${seatId}"]`);
+      const contRect = container.getBoundingClientRect();
+      const seatRect = seatEl.getBoundingClientRect();
+      const destX    = seatRect.left - contRect.left + seatRect.width / 2;
+      const seatTop  = seatRect.top  - contRect.top;
+
+      // a few pixels above seat top
+      const rowAboveY = seatTop - 6;
+
+      // Draw: entrance→aisle (rowAboveY), aisle→col (rowAboveY), drop into seat
+      drawArrow(entX, entY,            entX,     rowAboveY);
+      drawArrow(entX, rowAboveY,       destX,    rowAboveY);
+      drawArrow(destX, rowAboveY,      destX,    seatTop + seatRect.height/2);
+
+      document.getElementById('message')
+        .textContent = `✅ Guiding to seat ${seatId}`;
+    }
+
+    // Button handler
+    document.getElementById('btnNavigate')
+      .addEventListener('click', () => {
+        const ticketID = document.getElementById('ticketIdInput').value.trim();
+        const res = loadReservations().find(r => r.id === ticketID);
+        if (!res) {
+          document.getElementById('message').textContent = '❌ Ticket not found';
+          return;
+        }
+        navigateTo(res.seat);
+      });
+  </script>
+</body>
+</html>
