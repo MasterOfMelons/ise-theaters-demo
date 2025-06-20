@@ -4,26 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Purchase Ticket – ISE Theaters</title>
+  <link rel="stylesheet" href="terminal-theme.css" />
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-    nav { text-align:center; margin:16px 0; }
-    nav a { margin:0 8px; text-decoration:none; }
-    /* ===== Reservation Form Styles ===== */
+    nav { text-align: center; margin: 16px 0; }
+    nav a { margin: 0 8px; text-decoration: none; }
+
+    /* ===== Reservation Form ===== */
     #reservation {
-      max-width: 400px;
-      border: 1px solid #ccc;
-      padding: 20px;
-      border-radius: 6px;
-      margin-bottom: 30px;
+      max-width: 400px; border: 1px solid #ccc;
+      padding: 20px; border-radius: 6px; margin-bottom: 30px;
     }
     #reservation h2 { margin-top: 0; }
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 6px; }
-    select, input[type="text"], input[type="email"] {
+    select, input[type="text"], input[type="email"], input[type="number"] {
       width: 100%; padding: 8px; box-sizing: border-box;
     }
     .radio-group { margin-top: 6px; }
     .radio-group label { display: inline-block; margin-right: 15px; }
+    #costInfo, #totalCost {
+      margin-top: 10px; font-weight: bold;
+    }
     button {
       padding: 10px 18px; cursor: pointer;
       border: none; border-radius: 4px; font-size: 14px;
@@ -31,16 +33,10 @@
     #btnProceed { background-color: #28a745; color: white; margin-right: 10px; }
     #btnCancel  { background-color: #dc3545; color: white; }
 
-    /* ===== Seating Chart Styles ===== */
-    #seating { display: none; }
+    /* ===== Seating Chart ===== */
+    #seating { display: none; margin-bottom: 20px; }
     #seating h3 { margin-top: 0; text-align: center; }
-    .screen-label {
-      text-align: center; margin-top: 10px; font-weight: bold;
-    }
-    table {
-      border-collapse: collapse;
-      margin: 20px auto;
-    }
+    table { border-collapse: collapse; margin: 20px auto; }
     th, td {
       border: 1px solid #999; padding: 4px; text-align: center;
     }
@@ -49,38 +45,41 @@
       width: 50px; height: 50px;
       background-color: #007bff; color: white;
       border: none; border-radius: 4px; font-weight: bold;
+      cursor: pointer;
     }
-    .seat-btn:hover { background-color: #0056b3; }
-    #btnExitSeating {
-      display: block; margin: 20px auto 0;
-      background-color: #dc3545; color: white;
+    .seat-btn.selected {
+      background-color: #28a745 !important;
+    }
+    .seat-btn:disabled {
+      background-color: #6c757d !important;
+      cursor: not-allowed;
     }
 
-    /* ===== Confirmation Message ===== */
-    #confirmation {
-      display: none; max-width: 500px; margin: 20px auto;
-      border: 1px solid #28a745; padding: 20px;
-      border-radius: 6px; background-color: #f0fff0;
-    }
-    #confirmation h3 { margin-top: 0; color: #155724; }
-    #confirmation p  { margin: 8px 0; }
+    /* ===== Payment ===== */
+    #payment { display: none; max-width: 400px; margin: auto; }
+    #payment h3 { margin-top: 0; }
+    .form-group { margin-bottom: 12px; }
+
+    /* ===== Confirmation ===== */
+    #confirmation { display: none; max-width: 500px; margin: auto; }
+    #confirmation h3 { color: #155724; }
     #confirmation ul { list-style: none; padding-left: 0; }
     #confirmation li { margin-bottom: 6px; }
   </style>
 
-  <!-- jsPDF for PDF generation -->
+  <!-- jsPDF + QRious -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- QRious for QR-code generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
-<body>
+<body class="terminal">
+  <div class="terminal-container">
   <nav>
     <a href="purchase.html">🎟️ Purchase Ticket</a> |
     <a href="manage.html">🛠️ Manage Reservation</a> |
     <a href="navigate.html">📍 Theater Navigate</a>
   </nav>
 
-  <!-- ======================= Reservation Screen ======================= -->
+  <!-- ================= Reservation Screen ================= -->
   <div id="reservation">
     <h2>Purchase Movie Tickets</h2>
     <div class="form-group">
@@ -95,29 +94,28 @@
     <div class="form-group" id="timesGroup" style="display:none;">
       <label>Select Show Time</label>
       <div class="radio-group">
-        <label><input type="radio" name="showtime" value="10:00 AM" /> 10:00 AM</label>
-        <label><input type="radio" name="showtime" value="2:00 PM"  /> 2:00 PM</label>
-        <label><input type="radio" name="showtime" value="6:00 PM"  /> 6:00 PM</label>
+        <label><input type="radio" name="showtime" value="10:00 AM"> 10:00 AM</label>
+        <label><input type="radio" name="showtime" value="2:00 PM"> 2:00 PM</label>
+        <label><input type="radio" name="showtime" value="6:00 PM"> 6:00 PM</label>
       </div>
     </div>
-    <div id="userInfoGroup" style="display:none;">
-      <div class="form-group">
-        <label for="txtName">First and Last Name:</label>
-        <input type="text" id="txtName" placeholder="Your full name" />
-      </div>
-      <div class="form-group">
-        <label for="txtEmail">Email Address:</label>
-        <input type="email" id="txtEmail" placeholder="you@example.com" />
-      </div>
-      <button id="btnProceed">Proceed</button>
-      <button id="btnCancel">Cancel</button>
+    <div class="form-group" id="userInfoGroup" style="display:none;">
+      <label for="txtName">Full Name:</label>
+      <input type="text" id="txtName" placeholder="Your full name">
+      <label for="txtEmail">Email Address:</label>
+      <input type="email" id="txtEmail" placeholder="you@example.com">
+      <label for="seatCount">Number of Seats:</label>
+      <input type="number" id="seatCount" min="1" max="10" value="1">
+      <p id="costInfo">Price per ticket: $6.00</p>
+      <p id="totalCost">Total: $6.00</p>
     </div>
+    <button id="btnProceed">Proceed</button>
+    <button id="btnCancel">Cancel</button>
   </div>
 
-  <!-- ======================= Seating Chart Screen ======================= -->
+  <!-- ================= Seating Chart ================= -->
   <div id="seating">
-    <!-- lockedHeader will be injected here if fromManage -->
-    <h3>Select Your Seat</h3>
+    <h3 id="seatingHeader">Select Your Seats</h3>
     <table>
       <thead>
         <tr>
@@ -168,215 +166,229 @@
       </tbody>
     </table>
     <div class="screen-label">The screen is at the top</div>
-    <button id="btnExitSeating">Exit</button>
   </div>
 
-  <!-- ======================= Confirmation Message ======================= -->
+  <!-- ================= Payment ================= -->
+  <div id="payment">
+    <h3>Payment</h3>
+    <div class="form-group">
+      <label for="cardNumber">Credit Card Number:</label>
+      <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456">
+    </div>
+    <div class="form-group">
+      <label for="expDate">Expiry (MM/YY):</label>
+      <input type="text" id="expDate" placeholder="MM/YY">
+    </div>
+    <div class="form-group">
+      <label for="cvv">CVV:</label>
+      <input type="text" id="cvv" placeholder="123">
+    </div>
+    <button id="btnPay" style="background:#007bff; color:#fff" disabled>Pay Now</button>
+  </div>
+
+  <!-- ================= Confirmation ================= -->
   <div id="confirmation">
     <h3>Thank you for your purchase! 🎉</h3>
-    <p>Your ticket has been sent to your email!</p>
-    <p><strong>Current Ticket Info:</strong></p>
+    <p>Your tickets have been emailed to you.</p>
+    <p><strong>Details:</strong></p>
     <ul>
-      <li><strong>Ticket ID:</strong> <span id="confID"></span></li>
-      <li><strong>Name:</strong> <span id="confName"></span></li>
-      <li><strong>Email:</strong> <span id="confEmail"></span></li>
       <li><strong>Movie:</strong> <span id="confMovie"></span></li>
       <li><strong>Showtime:</strong> <span id="confTime"></span></li>
-      <li><strong>Seat:</strong> <span id="confSeat"></span></li>
+      <li><strong>Seats:</strong> <span id="confSeats"></span></li>
+      <li><strong>Ticket IDs:</strong> <span id="confIDs"></span></li>
     </ul>
   </div>
 
   <script>
-    // Generate random 8-char ID
-    function generateTicketID(length = 8) {
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      let result = "";
-      for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return result;
-    }
+    const PRICE = 6.00;
 
-    // Read/write localStorage
     function loadReservations() {
       const s = localStorage.getItem("reservations");
-      try { return JSON.parse(s) || []; }
+      try { return s ? JSON.parse(s) : []; }
       catch { return []; }
     }
     function saveReservations(arr) {
       localStorage.setItem("reservations", JSON.stringify(arr));
     }
-
-    // Disable seats already reserved
-    function disableReservedSeats() {
-      loadReservations()
-        .filter(r => r.movie === selectedMovie && r.time === selectedTime)
-        .forEach(r => {
-          const btn = document.querySelector(
-            `.seat-btn[data-seat="${r.seat}"]`
-          );
-          if (btn) {
-            btn.disabled = true;
-            btn.style.backgroundColor = "#6c757d";
-            btn.style.cursor = "not-allowed";
-            btn.title = "Reserved";
-          }
-        });
+    function generateTicketID(len=8) {
+      const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let r="";
+      for(let i=0;i<len;i++){
+        r += chars.charAt(Math.floor(Math.random()*chars.length));
+      }
+      return r;
     }
 
-    // DOM Cache
-    const reservationDiv  = document.getElementById("reservation");
-    const movieSelect     = document.getElementById("movieSelect");
-    const timesGroup      = document.getElementById("timesGroup");
-    const userInfoGroup   = document.getElementById("userInfoGroup");
-    const btnProceed      = document.getElementById("btnProceed");
-    const btnCancel       = document.getElementById("btnCancel");
-    const seatingDiv      = document.getElementById("seating");
-    const seatButtons     = Array.from(document.querySelectorAll(".seat-btn"));
-    const btnExitSeating  = document.getElementById("btnExitSeating");
-    const txtNameField    = document.getElementById("txtName");
-    const txtEmailField   = document.getElementById("txtEmail");
-    const confirmationDiv = document.getElementById("confirmation");
-    const confIDSpan      = document.getElementById("confID");
-    const confNameSpan    = document.getElementById("confName");
-    const confEmailSpan   = document.getElementById("confEmail");
-    const confMovieSpan   = document.getElementById("confMovie");
-    const confTimeSpan    = document.getElementById("confTime");
-    const confSeatSpan    = document.getElementById("confSeat");
+    // — DOM refs —
+    const reservationDiv   = document.getElementById("reservation");
+    const movieSelect      = document.getElementById("movieSelect");
+    const timesGroup       = document.getElementById("timesGroup");
+    const userInfoGroup    = document.getElementById("userInfoGroup");
+    const seatCountFld     = document.getElementById("seatCount");
+    const totalCostP       = document.getElementById("totalCost");
+    const btnProceed       = document.getElementById("btnProceed");
+    const btnCancel        = document.getElementById("btnCancel");
+    const seatingDiv       = document.getElementById("seating");
+    const seatingHeader    = document.getElementById("seatingHeader");
+    const seatButtons      = Array.from(document.querySelectorAll(".seat-btn"));
+    const paymentDiv       = document.getElementById("payment");
+    const btnPay           = document.getElementById("btnPay");
+    const confirmationDiv  = document.getElementById("confirmation");
+    const confMovieSpan    = document.getElementById("confMovie");
+    const confTimeSpan     = document.getElementById("confTime");
+    const confSeatsSpan    = document.getElementById("confSeats");
+    const confIDsSpan      = document.getElementById("confIDs");
 
-    // State
-    let selectedMovie = "",
-        selectedTime  = "",
-        userName      = "",
-        userEmail     = "";
+    // — cache payment inputs —
+    const cardFld = document.getElementById("cardNumber");
+    const expFld  = document.getElementById("expDate");
+    const cvvFld  = document.getElementById("cvv");
 
-    // === Prefill from Manage → Add Seat ===
-    const prefillRaw = localStorage.getItem("prefill");
-    const fromManage = localStorage.getItem("fromManage") === "true";
-    if (prefillRaw && fromManage) {
-      const p = JSON.parse(prefillRaw);
+    // — state —
+    let selectedMovie="", selectedTime="", userName="", userEmail="";
+    let seatsToPick=1, selectedSeats=[], groupID=null;
+
+    // — helper to enable/disable Pay —
+    function updatePayState() {
+      const allFilled = cardFld.value.trim() !== "" &&
+                        expFld.value.trim()  !== "" &&
+                        cvvFld.value.trim()  !== "";
+      btnPay.disabled = !(selectedSeats.length === seatsToPick && allFilled);
+    }
+
+    // — 1) Manage prefill from “Add Seat” (unchanged) —
+    const pre = localStorage.getItem("prefill");
+    const fromMgmt = localStorage.getItem("fromManage")==="true";
+    if (pre && fromMgmt) {
+      const p = JSON.parse(pre);
       selectedMovie = p.movie;
       selectedTime  = p.time;
       userName      = p.name;
       userEmail     = p.email;
+      groupID       = p.groupID;
+      seatsToPick   = 1;
 
-      // Fill form values (though hidden)
-      movieSelect.value = selectedMovie;
-      timesGroup.style.display = "block";
-      document.querySelector(
-        `input[name="showtime"][value="${selectedTime}"]`
-      ).checked = true;
-      userInfoGroup.style.display = "block";
-      txtNameField.value  = userName;
-      txtEmailField.value = userEmail;
-
-      // Skip straight to seating
       reservationDiv.style.display = "none";
-      seatingDiv.style.display     = "block";
-
-      // Inject a header so they know what they're adding to
-      const hdr = document.createElement("h3");
-      hdr.textContent = `Adding seat for ${selectedMovie} @ ${selectedTime}`;
-      seatingDiv.insertBefore(hdr, seatingDiv.firstChild);
-
+      seatingHeader.textContent = `Adding 1 seat to ${selectedMovie} @ ${selectedTime}`;
+      seatingDiv.style.display = "block";
+      loadReservations()
+        .filter(r=>r.movie===selectedMovie&&r.time===selectedTime)
+        .forEach(r=>document.querySelector(`.seat-btn[data-seat="${r.seat}"]`).disabled=true);
       localStorage.removeItem("fromManage");
-      disableReservedSeats();
     }
 
-    // 1) Movie select → show times
-    movieSelect.addEventListener("change", () => {
+    // — 2) Reservation → movie/time/people logic —
+    movieSelect.addEventListener("change", ()=> {
       selectedMovie = movieSelect.value;
-      timesGroup.style.display    = "block";
+      timesGroup.style.display = "block";
       userInfoGroup.style.display = "none";
-      document.getElementsByName("showtime").forEach(r => r.checked = false);
     });
-
-    // 2) Time select → show name/email
-    document.getElementsByName("showtime").forEach(radio => {
-      radio.addEventListener("change", () => {
-        selectedTime = radio.value;
+    document.getElementsByName("showtime").forEach(radio=> {
+      radio.addEventListener("change", e=> {
+        selectedTime = e.target.value;
         userInfoGroup.style.display = "block";
       });
     });
-
-    // 3) Cancel → reload
-    btnCancel.addEventListener("click", () => location.reload());
-
-    // 4) Proceed → seating
-    btnProceed.addEventListener("click", () => {
-      userName  = txtNameField.value.trim();
-      userEmail = txtEmailField.value.trim();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!userName)  { alert("Please enter your name."); return; }
-      if (!userEmail) { alert("Please enter your email."); return; }
-      if (!emailRegex.test(userEmail)) {
-        alert("Please enter a valid email."); return;
+    seatCountFld.addEventListener("input", ()=> {
+      const n = parseInt(seatCountFld.value)||1;
+      totalCostP.textContent = `Total: $${(n*PRICE).toFixed(2)}`;
+    });
+    btnCancel.addEventListener("click", ()=> location.reload());
+    btnProceed.addEventListener("click", ()=> {
+      userName  = document.getElementById("txtName").value.trim();
+      userEmail = document.getElementById("txtEmail").value.trim();
+      if (!selectedMovie||!selectedTime||!userName||!userEmail) {
+        return alert("Please fill in movie, time, name & email.");
       }
-      alert(`Please select your seat for ${selectedMovie} at ${selectedTime}.`);
+      seatsToPick = parseInt(seatCountFld.value)||1;
+      if (!groupID) groupID = generateTicketID();
       reservationDiv.style.display = "none";
       seatingDiv.style.display     = "block";
-      disableReservedSeats();
+      loadReservations()
+        .filter(r=>r.movie===selectedMovie&&r.time===selectedTime)
+        .forEach(r=>document.querySelector(`.seat-btn[data-seat="${r.seat}"]`).disabled=true);
     });
 
-    // 5) Seat click → save + PDF + QR + confirmation
-    seatButtons.forEach(btn => btn.addEventListener("click", () => {
-      const seat    = btn.dataset.seat;
-      const ticketID= generateTicketID();
-
-      // Save reservation
-      const reservation = {
-        id:        ticketID,
-        name:      userName,
-        email:     userEmail,
-        movie:     selectedMovie,
-        time:      selectedTime,
-        seat,
-        timestamp: new Date().toISOString(),
-      };
-      const all = loadReservations();
-      all.push(reservation);
-      saveReservations(all);
-
-      // Generate PDF ticket
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({
-        orientation: "landscape",
-        unit: "pt",
-        format: [300, 125],
+    // — 3) Seat selection —
+    seatButtons.forEach(b=> {
+      b.addEventListener("click", ()=> {
+        if (b.disabled) return;
+        const s = b.dataset.seat;
+        if (b.classList.contains("selected")) {
+          b.classList.remove("selected");
+          selectedSeats = selectedSeats.filter(x=>x!==s);
+        } else if (selectedSeats.length < seatsToPick) {
+          b.classList.add("selected");
+          selectedSeats.push(s);
+        }
+        if (selectedSeats.length === seatsToPick) {
+          seatButtons.forEach(x=>{ if (!x.classList.contains("selected")) x.disabled=true; });
+          paymentDiv.style.display = "block";
+          // wire up payment-field listeners once
+          [cardFld, expFld, cvvFld].forEach(f=>f.addEventListener("input", updatePayState));
+          updatePayState();
+        }
       });
-      doc.setFillColor(20,20,20).rect(0,0,300,125,"F");
-      doc.setFillColor(255,215,0);
-      doc.rect(0,0,300,40,"F");
-      doc.rect(0,95,300,30,"F");
-      doc.setDrawColor(255,215,0).setLineWidth(1).setLineDash([3,2],0);
-      doc.line(0,95,300,95).setLineDash();
-      doc.setFont("helvetica","bold").setFontSize(12).setTextColor(20,20,20)
-         .text("ISE Theaters",150,16,{align:"center"})
-         .setFontSize(16)
-         .text("MOVIE TICKET",150,32,{align:"center"});
-      doc.setFontSize(10).setTextColor(255,215,0)
-         .text(`Ticket ID: ${ticketID}`,15,60)
-         .text(`Name:      ${userName}`,15,75)
-         .text(`Movie:     ${selectedMovie}`,15,90)
-         .text(`Time:      ${selectedTime}`,160,60)
-         .text(`Seat:      ${seat}`,160,75);
-      const qr = new QRious({ value: ticketID, size: 50, level: "H" });
-      doc.addImage(qr.toDataURL(), "PNG", 260, 45, 40, 40);
-      doc.save(`ticket_${ticketID}.pdf`);
+    });
 
-      // Show confirmation UI
-      confIDSpan.textContent    = ticketID;
-      confNameSpan.textContent  = userName;
-      confEmailSpan.textContent = userEmail;
+    // — 4) Pay & generate PDF —
+    btnPay.addEventListener("click", ()=> {
+      const all = loadReservations();
+      const ticketIDs = [];
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation:"landscape", unit:"pt", format:[300,125] });
+
+      selectedSeats.forEach((seat,idx)=> {
+        const id = generateTicketID();
+        ticketIDs.push(id);
+        all.push({
+          id, name:userName, email:userEmail,
+          movie:selectedMovie, time:selectedTime,
+          seat, timestamp:new Date().toISOString(),
+          groupID
+        });
+        if (idx>0) doc.addPage([300,125],"landscape");
+
+        // top gold bar
+        doc.setFillColor(255,215,0).rect(0,0,300,40,"F");
+        // black center band (taller)
+        doc.setFillColor(20,20,20).rect(0,40,300,70,"F");
+        // bottom gold bar
+        doc.setFillColor(255,215,0).rect(0,110,300,15,"F");
+        // separator
+        doc.setDrawColor(255,215,0).line(0,110,300,110);
+
+        // header
+        doc.setFont("helvetica","bold").setFontSize(12).setTextColor(20,20,20)
+           .text("ISE Theaters",150,25,{align:"center"})
+           .setFontSize(10).text(`Price: $${PRICE.toFixed(2)}`,150,35,{align:"center"});
+        // MOVIE TICKET
+        doc.setFont("helvetica","bold").setFontSize(16).setTextColor(255,215,0)
+           .text("MOVIE TICKET",150,55,{align:"center"});
+        // details
+        doc.setFont("helvetica","normal").setFontSize(10).setTextColor(255,215,0)
+           .text(`Ticket ID: ${id}`,15,75)
+           .text(`Time:      ${selectedTime}`,160,75)
+           .text(`Name:      ${userName}`,15,90)
+           .text(`Seat:      ${seat}`,160,90)
+           .text(`Movie:     ${selectedMovie}`,15,105);
+        // QR
+        const qr = new QRious({ value:id, size:50, level:"H" });
+        doc.addImage(qr.toDataURL(),"PNG",245,60,40,40);
+      });
+
+      saveReservations(all);
+      doc.save(`tickets_${groupID}.pdf`);
+
+      // show confirmation
       confMovieSpan.textContent = selectedMovie;
       confTimeSpan.textContent  = selectedTime;
-      confSeatSpan.textContent  = seat;
+      confSeatsSpan.textContent = selectedSeats.join(", ");
+      confIDsSpan.textContent   = ticketIDs.join(", ");
       seatingDiv.style.display      = "none";
+      paymentDiv.style.display      = "none";
       confirmationDiv.style.display = "block";
-    }));
-
-    // 6) Exit seating → reload
-    btnExitSeating.addEventListener("click", () => location.reload());
+    });
   </script>
 </body>
 </html>

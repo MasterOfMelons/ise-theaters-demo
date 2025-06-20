@@ -1,0 +1,303 @@
+/* ────────────────────────────────────────────────────────────────────────── */
+/* container */
+.terminal-container {
+  max-width: 90%;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #1e1e1e;
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  color: #eee;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* navigation */
+nav {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+nav a {
+  display: inline-block;
+  margin: 0 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  color: #4caf50;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+nav a:hover {
+  background: #4caf50;
+  color: #1e1e1e;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* page title */
+h2 {
+  text-align: center;
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
+  color: #4caf50;
+  text-shadow: 0 0 6px rgba(76, 175, 80, 0.7);
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* form controls */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #ddd;
+}
+input[type="text"],
+input[type="file"],
+button {
+  font-family: inherit;
+  font-size: 1rem;
+}
+input[type="text"],
+input[type="file"] {
+  width: 320px;
+  padding: 0.6rem;
+  margin-right: 0.6rem;
+  background: #2e2e2e;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #eee;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+}
+input::placeholder {
+  color: #888;
+}
+button#btnSearch,
+button {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  background: #4caf50;
+  color: #1e1e1e;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button#btnSearch:hover,
+button:hover {
+  background: #66bb6a;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* results table */
+#results {
+  overflow-x: auto;
+  margin-top: 2rem;
+}
+#results table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+#results th,
+#results td {
+  padding: 0.8rem;
+  border: 1px solid #444;
+  vertical-align: top;
+  word-break: break-word;
+  white-space: normal;
+}
+#results th {
+  background: #2e2e2e;
+  color: #4caf50;
+  font-weight: 600;
+}
+#results tbody tr:nth-child(odd)  { background: #1f1f1f; }
+#results tbody tr:nth-child(even) { background: #272727; }
+
+/* make actions column a fixed width */
+#results td:last-child {
+  width: 160px;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* action buttons */
+.action-btn {
+  display: block;
+  width: 100%;
+  margin: 0.3rem 0;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  text-align: center;
+  color: #fff;
+}
+.action-btn.swap-seat-btn {
+  background: #2196f3;
+  border-color: #1976d2;
+}
+.action-btn.swap-seat-btn:hover {
+  background: #42a5f5;
+}
+.action-btn.cancel-btn {
+  background: #e53935;
+  border-color: #c62828;
+}
+.action-btn.cancel-btn:hover {
+  background: #ef5350;
+}
+.action-btn.add-seat-btn {
+  background: #4caf50;
+  border-color: #388e3c;
+}
+.action-btn.add-seat-btn:hover {
+  background: #66bb6a;
+}
+.action-btn.remove-seat-btn {
+  background: #ffb300;
+  border-color: #ffa000;
+  color: #1e1e1e;
+}
+.action-btn.remove-seat-btn:hover {
+  background: #ffca28;
+}
+
+/* no-results message */
+.no-results {
+  text-align: center;
+  font-style: italic;
+  margin-top: 2rem;
+  color: #bbb;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* swap‐seat modal */
+#swapModal {
+  display: none;
+  position: fixed;
+  top: 5%; left: 5%;
+  width: 90%; height: 90%;
+  background: #1e1e1e;
+  border: 2px solid #4caf50;
+  border-radius: 6px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+  padding: 1.5rem;
+  overflow: auto;
+  z-index: 1000;
+}
+#swapModal h3 {
+  margin-top: 0;
+  color: #4caf50;
+}
+#swapCancel {
+  margin-bottom: 1rem;
+  background: #4caf50;
+  border-color: #388e3c;
+  color: #1e1e1e;
+}
+#swapCancel:hover {
+  background: #66bb6a;
+}
+#swapChart {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+#swapChart th,
+#swapChart td {
+  padding: 0.6rem;
+  border: 1px solid #444;
+  text-align: center;
+}
+.seat-btn {
+  width: 40px; height: 40px;
+  background: #2e2e2e;
+  color: #eee;
+  border: 1px solid #555;
+  border-radius: 4px;
+  transition: background 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+.seat-btn.disabled {
+  background: #444;
+  border-color: #333;
+  cursor: not-allowed;
+}
+.seat-btn.selected {
+  background: #4caf50;
+  border-color: #388e3c;
+}
+.seat-btn:not(.disabled):hover {
+  background: #505050;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Purchase-page seating header */
+#seating table thead th {
+  background: #2e2e2e;   /* dark background */
+  color: #4caf50;        /* bright green */
+  font-weight: 600;
+  opacity: 1;            /* fully visible */
+}
+#seating table thead th:first-child {
+  background: transparent;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Navigation floorplan header & row‐labels */
+#floorplan-container table thead th {
+  background: #2e2e2e;
+  color: #4caf50;
+  font-weight: 600;
+  opacity: 1;
+}
+#floorplan-container table thead th:first-child {
+  background: transparent;
+}
+/* boost contrast on the A/B/C labels */
+#floorplan-container table tbody td:first-child {
+  background: #2e2e2e;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Swap-modal chart header & row labels inside actual <thead> */
+#swapChart thead th {
+  background: #2e2e2e;
+  color: #4caf50;
+  font-weight: 600;
+  opacity: 1;
+}
+#swapChart thead th:first-child {
+  background: transparent;
+}
+#swapChart tbody td:first-child {
+  background: #2e2e2e;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* *NEW* fallback for swapChart when no <thead> is used: */
+#swapChart tr:first-child th {
+  background: #2e2e2e;
+  color: #4caf50;
+  font-weight: 600;
+  opacity: 1;
+}
+#swapChart tr:first-child th:first-child {
+  background: transparent;
+}
+#swapChart tr td:first-child {
+  background: #2e2e2e;
+  color: #fff;
+  font-weight: 600;
+}
