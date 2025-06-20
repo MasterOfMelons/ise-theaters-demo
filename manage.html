@@ -2,247 +2,156 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Manage Reservations</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-
-    h2 {
-      margin-bottom: 10px;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 6px;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    nav { text-align:center; margin:16px 0; }
+    nav a { margin: 0 8px; text-decoration: none; }
+    h2 { margin-bottom: 10px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 6px; }
     input[type="text"] {
-      width: 300px;
-      padding: 8px;
-      box-sizing: border-box;
+      width: 300px; padding: 8px; box-sizing: border-box;
       margin-right: 10px;
     }
     button {
-      padding: 8px 16px;
-      cursor: pointer;
-      border: none;
-      border-radius: 4px;
-      font-size: 14px;
+      padding: 8px 16px; cursor: pointer;
+      border: none; border-radius: 4px; font-size: 14px;
       margin-right: 5px;
     }
-    #btnSearch {
-      background-color: #007bff;
-      color: white;
-    }
-    #results {
-      margin-top: 20px;
-    }
+    #btnSearch { background-color: #007bff; color: white; }
+    #results { margin-top: 20px; }
     table {
-      border-collapse: collapse;
-      width: 100%;
+      border-collapse: collapse; width: 100%;
     }
     th, td {
-      border: 1px solid #999;
-      padding: 8px;
-      text-align: left;
+      border: 1px solid #999; padding: 8px; text-align: left;
     }
-    th {
-      background-color: #f0f0f0;
-    }
+    th { background-color: #f0f0f0; }
     .action-btn {
-      padding: 4px 8px;
-      font-size: 12px;
-      cursor: pointer;
-      border: none;
-      border-radius: 4px;
+      padding: 4px 8px; font-size: 12px;
+      border: none; border-radius: 4px; cursor: pointer;
       margin-right: 4px;
     }
-    .cancel-btn {
-      background-color: #dc3545;
-      color: white;
-    }
-    .add-seat-btn {
-      background-color: #28a745;
-      color: white;
-    }
-    .no-results {
-      margin-top: 20px;
-      font-style: italic;
-    }
+    .cancel-btn { background-color: #dc3545; color: white; }
+    .add-seat-btn { background-color: #28a745; color: white; }
+    .no-results { margin-top: 20px; font-style: italic; }
   </style>
 </head>
 <body>
-
-<nav style="text-align:center; margin:16px 0;">
-  <a href="index.html">🎟️ Purchase Ticket</a> |
-  <a href="manage.html">🛠️ Manage Reservation</a> |
-  <a href="navigate.html">📍 Theater Navigate</a>
-</nav>
-
-
+  <nav>
+    <a href="index.html">🎟️ Purchase Ticket</a> |
+    <a href="manage.html">🛠️ Manage Reservation</a> |
+    <a href="navigate.html">📍 Theater Navigate</a>
+  </nav>
 
   <h2>Manage Reservations</h2>
   <div class="form-group">
     <label for="searchInput">Enter Email or Ticket ID:</label>
-    <input type="text" id="searchInput" placeholder="e.g. john@example.com or A1B2C3D4" />
+    <input type="text" id="searchInput"
+           placeholder="e.g. john@example.com or A1B2C3D4" />
     <button id="btnSearch">Search</button>
   </div>
 
   <div id="results"></div>
 
   <script>
-    // ===== Utility: Read the "reservations" array from localStorage =====
     function loadReservations() {
-      const stored = localStorage.getItem('reservations');
-      if (!stored) return [];
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return [];
-      }
+      const s = localStorage.getItem("reservations");
+      if (!s) return [];
+      try { return JSON.parse(s); }
+      catch { return []; }
     }
-
-    // ===== Utility: Save the updated "reservations" array back =====
     function saveReservations(arr) {
-      localStorage.setItem('reservations', JSON.stringify(arr));
+      localStorage.setItem("reservations", JSON.stringify(arr));
     }
 
-    // ===== Render a list of reservations (array) into the #results div =====
-    function renderResults(reservationsArray) {
-      const container = document.getElementById('results');
-      container.innerHTML = ''; // clear
+    function shouldDisplay(term) {
+      const t = term.toLowerCase().trim();
+      return r => r.email.toLowerCase() === t || r.id.toLowerCase() === t;
+    }
 
-      if (!reservationsArray || reservationsArray.length === 0) {
-        container.innerHTML = '<div class="no-results">No matching reservations found.</div>';
+    function renderResults(arr) {
+      const container = document.getElementById("results");
+      container.innerHTML = "";
+      if (!arr || arr.length === 0) {
+        container.innerHTML =
+          '<div class="no-results">No matching reservations found.</div>';
         return;
       }
-
-      // Build a table
-      const table = document.createElement('table');
-      const thead = document.createElement('thead');
-      const headerRow = document.createElement('tr');
-      [
-        'Ticket ID',
-        'Name',
-        'Email',
-        'Movie',
-        'Showtime',
-        'Seat',
-        'Booked At',
-        'Actions'
-      ].forEach(text => {
-        const th = document.createElement('th');
-        th.textContent = text;
-        headerRow.appendChild(th);
-      });
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      ["Ticket ID","Name","Email","Movie","Showtime","Seat","Booked At","Actions"]
+        .forEach(text => {
+          const th = document.createElement("th"); th.textContent = text;
+          headerRow.appendChild(th);
+        });
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
-      const tbody = document.createElement('tbody');
-      reservationsArray.forEach(res => {
-        const tr = document.createElement('tr');
-
-        // Ticket ID
-        const tdID = document.createElement('td');
-        tdID.textContent = res.id;
-        tr.appendChild(tdID);
-
-        // Name
-        const tdName = document.createElement('td');
-        tdName.textContent = res.name;
-        tr.appendChild(tdName);
-
-        // Email
-        const tdEmail = document.createElement('td');
-        tdEmail.textContent = res.email;
-        tr.appendChild(tdEmail);
-
-        // Movie
-        const tdMovie = document.createElement('td');
-        tdMovie.textContent = res.movie;
-        tr.appendChild(tdMovie);
-
-        // Showtime
-        const tdTime = document.createElement('td');
-        tdTime.textContent = res.time;
+      const tbody = document.createElement("tbody");
+      arr.forEach(res => {
+        const tr = document.createElement("tr");
+        ["id","name","email","movie","time","seat"].forEach(key => {
+          const td = document.createElement("td");
+          td.textContent = res[key];
+          tr.appendChild(td);
+        });
+        // timestamp
+        const tdTime = document.createElement("td");
+        tdTime.textContent = new Date(res.timestamp).toLocaleString();
         tr.appendChild(tdTime);
 
-        // Seat
-        const tdSeat = document.createElement('td');
-        tdSeat.textContent = res.seat;
-        tr.appendChild(tdSeat);
-
-        // Timestamp
-        const tdTimestamp = document.createElement('td');
-        // Format ISO timestamp to a more user‐friendly string:
-        tdTimestamp.textContent = new Date(res.timestamp).toLocaleString();
-        tr.appendChild(tdTimestamp);
-
-        // Actions (Cancel / Add Seat)
-        const tdActions = document.createElement('td');
-
-        //  — Cancel Button —
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'action-btn cancel-btn';
-        cancelBtn.addEventListener('click', function() {
-          // Remove this reservation from localStorage
-          const allRes = loadReservations();
-          const filtered = allRes.filter(r => r.id !== res.id);
-          saveReservations(filtered);
-          // Re-render results (filter out the deleted one)
-          renderResults(filtered.filter(shouldDisplay(res.searchTerm)));
+        // actions
+        const tdAct = document.createElement("td");
+        // cancel
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "action-btn cancel-btn";
+        cancelBtn.addEventListener("click", () => {
+          if (!confirm(`Cancel ticket ${res.id} for seat ${res.seat}?`)) return;
+          alert("✅ Your ticket has been canceled.\n💸 A refund will be issued.");
+          const all = loadReservations();
+          const updated = all.filter(r => r.id !== res.id);
+          saveReservations(updated);
+          renderResults(updated.filter(shouldDisplay(
+            document.getElementById("searchInput").value
+          )));
         });
-        tdActions.appendChild(cancelBtn);
+        tdAct.appendChild(cancelBtn);
 
-        //  — Add Seat Button —
-        const addSeatBtn = document.createElement('button');
-        addSeatBtn.textContent = 'Add Seat';
-        addSeatBtn.className = 'action-btn add-seat-btn';
-        addSeatBtn.addEventListener('click', function() {
-          // Set prefill in localStorage and redirect to index.html
-          localStorage.setItem('prefill', JSON.stringify({ name: res.name, email: res.email }));
-          window.location.href = 'index.html';
+        // add seat
+        const addBtn = document.createElement("button");
+        addBtn.textContent = "Add Seat";
+        addBtn.className = "action-btn add-seat-btn";
+        addBtn.addEventListener("click", () => {
+          localStorage.setItem("prefill", JSON.stringify({
+            name: res.name, email: res.email,
+            movie: res.movie, time: res.time
+          }));
+          localStorage.setItem("fromManage","true");
+          window.location.href = "index.html";
         });
-        tdActions.appendChild(addSeatBtn);
+        tdAct.appendChild(addBtn);
 
-        tr.appendChild(tdActions);
+        tr.appendChild(tdAct);
         tbody.appendChild(tr);
       });
-
       table.appendChild(tbody);
       container.appendChild(table);
     }
 
-    // ===== Helper: returns a function that checks if a reservation’s email or ID matches the searchTerm =====
-    function shouldDisplay(searchTerm) {
-      return function(res) {
-        const term = searchTerm.toLowerCase().trim();
-        return (
-          res.email.toLowerCase() === term ||
-          res.id.toLowerCase() === term
-        );
-      };
-    }
-
-    // ===== Main: wire up “Search” button =====
-    document.getElementById('btnSearch').addEventListener('click', function() {
-      const term = document.getElementById('searchInput').value.trim();
-      if (!term) {
-        alert('Please enter an email address or Ticket ID to search.');
-        return;
-      }
-
-      const allRes = loadReservations();
-      // Filter by exact match on email or ID (case‐insensitive)
-      const filtered = allRes.filter(shouldDisplay(term));
-
-      // Render them (or “No matching...” if empty)
-      renderResults(filtered);
-    });
+    document.getElementById("btnSearch")
+      .addEventListener("click", () => {
+        const term = document.getElementById("searchInput").value.trim();
+        if (!term) {
+          alert("Please enter an email or Ticket ID.");
+          return;
+        }
+        renderResults(loadReservations().filter(shouldDisplay(term)));
+      });
   </script>
 </body>
 </html>

@@ -2,123 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ISE Theaters Indoor Navigation</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
-    }
-    #controls {
-      margin-bottom: 10px;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; margin:20px; }
+    nav { text-align:center; margin:16px 0; }
+    nav a { margin:0 8px; text-decoration:none; }
+    #controls { margin-bottom:10px; }
     #controls input {
-      padding: 6px;
-      font-size: 14px;
-      width: 180px;
+      padding:6px; font-size:14px; width:180px;
     }
     #controls button {
-      padding: 6px 12px;
-      font-size: 14px;
+      padding:6px 12px; font-size:14px;
     }
-    #message {
-      margin-top: 8px;
-      color: green;
-      font-weight: bold;
-    }
+    #message { margin-top:8px; color:green; font-weight:bold; }
 
-    /* Container for the seating chart + overlay canvas + labels */
     #floorplan-container {
-      position: relative;
-      display: inline-block;
-      border: 2px solid #333;
-      margin: 20px auto;
-      background: white;
+      position:relative; display:inline-block;
+      border:2px solid #333; margin:20px auto; background:white;
     }
-
-    /* Screen & Entrance labels */
     .map-label {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-weight: bold;
-      color: #333;
-      font-size: 14px;
-      background: white;
-      padding: 2px 6px;
-      white-space: nowrap;
+      position:absolute; left:50%;
+      transform:translateX(-50%);
+      font-weight:bold; color:#333; font-size:14px;
+      background:white; padding:2px 6px; white-space:nowrap;
     }
-    .screen-label {
-      top: -16px;
-    }
+    .screen-label { top:-16px; }
     .screen-label::before {
-      content: "";
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      background: gold;
-      margin-right: 6px;
-      vertical-align: middle;
+      content:""; display:inline-block; width:12px; height:12px;
+      background:gold; margin-right:6px; vertical-align:middle;
     }
-    .entrance-label {
-      bottom: -16px;
-    }
+    .entrance-label { bottom:-16px; }
     .entrance-label::before {
-      content: "";
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      background: #28a745;
-      margin-right: 6px;
-      vertical-align: middle;
+      content:""; display:inline-block; width:12px; height:12px;
+      background:#28a745; margin-right:6px; vertical-align:middle;
     }
-
-    /* Seating chart table styling */
-    #floorplan-container table {
-      border-collapse: collapse;
-      margin: 0;
+    table { border-collapse:collapse; margin:0; }
+    th, td {
+      border:1px solid #999; padding:4px; text-align:center;
     }
-    #floorplan-container th,
-    #floorplan-container td {
-      border: 1px solid #999;
-      padding: 4px;
-      text-align: center;
-    }
-    #floorplan-container th {
-      background-color: #f0f0f0;
-    }
+    th { background-color:#f0f0f0; }
     .seat-btn {
-      width: 40px;
-      height: 40px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 12px;
-      cursor: default;
+      width:40px; height:40px;
+      background-color:#007bff; color:white;
+      border:none; border-radius:4px; font-size:12px;
+      cursor:default;
     }
-
-    /* Canvas overlay */
     #pathcanvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
+      position:absolute; top:0; left:0; pointer-events:none;
     }
   </style>
 </head>
 <body>
-
-<nav style="text-align:center; margin:16px 0;">
-  <a href="index.html">🎟️ Purchase Ticket</a> |
-  <a href="manage.html">🛠️ Manage Reservation</a> |
-  <a href="navigate.html">📍 Theater Navigate</a>
-</nav>
-
-
+  <nav>
+    <a href="index.html">🎟️ Purchase Ticket</a> |
+    <a href="manage.html">🛠️ Manage Reservation</a> |
+    <a href="navigate.html">📍 Theater Navigate</a>
+  </nav>
 
   <h1>ISE Theaters Indoor Navigation</h1>
-
   <div id="controls">
     <input id="ticketIdInput" placeholder="e.g. AP53ASP1" />
     <button id="btnNavigate">Navigate</button>
@@ -126,11 +68,8 @@
   <div id="message"></div>
 
   <div id="floorplan-container">
-    <!-- SCREEN label -->
     <div class="map-label screen-label">SCREEN</div>
-
-    <!-- Seating-chart HTML -->
-    <table id="floorplan">
+    <table>
       <thead>
         <tr>
           <th></th>
@@ -180,33 +119,28 @@
         </tr>
       </tbody>
     </table>
-
-    <!-- ENTRANCE label -->
     <div class="map-label entrance-label">ENTRANCE</div>
-
-    <!-- Overlay canvas -->
     <canvas id="pathcanvas"></canvas>
   </div>
 
   <script>
-    // Utility: Load reservations
     function loadReservations() {
-      const data = localStorage.getItem('reservations');
-      try { return JSON.parse(data) || []; }
+      const d = localStorage.getItem("reservations");
+      try { return JSON.parse(d) || []; }
       catch { return []; }
     }
 
-    // Canvas setup
-    const container = document.getElementById('floorplan-container');
-    const canvas    = document.getElementById('pathcanvas');
-    const ctx       = canvas.getContext('2d');
-    window.addEventListener('load', () => {
+    const container = document.getElementById("floorplan-container");
+    const canvas    = document.getElementById("pathcanvas");
+    const ctx       = canvas.getContext("2d");
+    window.addEventListener("load", () => {
       canvas.width  = container.clientWidth;
       canvas.height = container.clientHeight;
     });
 
-    // Draw an arrow with green fill & dark-green stroke
-    function drawArrow(x1, y1, x2, y2, fillColor = '#28a745', strokeColor = '#004d00') {
+    function drawArrow(x1, y1, x2, y2,
+                       fillColor = "#28a745",
+                       strokeColor = "#004d00") {
       const headLen = 8;
       const dx = x2 - x1, dy = y2 - y1;
       const angle = Math.atan2(dy, dx);
@@ -216,61 +150,41 @@
       ctx.strokeStyle = strokeColor;
       ctx.fillStyle   = fillColor;
 
-      // shaft
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-
-      // head
-      ctx.beginPath();
-      ctx.moveTo(x2, y2);
-      ctx.lineTo(
-        x2 - headLen * Math.cos(angle - Math.PI/6),
-        y2 - headLen * Math.sin(angle - Math.PI/6)
-      );
-      ctx.lineTo(
-        x2 - headLen * Math.cos(angle + Math.PI/6),
-        y2 - headLen * Math.sin(angle + Math.PI/6)
-      );
-      ctx.closePath();
-      ctx.fill();
+      ctx.moveTo(x2,y2);
+      ctx.lineTo(x2-headLen*Math.cos(angle-Math.PI/6),
+                 y2-headLen*Math.sin(angle-Math.PI/6));
+      ctx.lineTo(x2-headLen*Math.cos(angle+Math.PI/6),
+                 y2-headLen*Math.sin(angle+Math.PI/6));
+      ctx.closePath(); ctx.fill();
     }
 
-    // Navigate to display a 3-segment path that skirts the seat
     function navigateTo(seatId) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0,0,canvas.width,canvas.height);
 
-      // entrance at bottom-center
-      const entX = canvas.width / 2;
-      const entY = canvas.height;
-
-      // find seat element center + top Y
+      const entX = canvas.width/2, entY = canvas.height;
       const seatEl   = container.querySelector(`[data-seat="${seatId}"]`);
-      const contRect = container.getBoundingClientRect();
-      const seatRect = seatEl.getBoundingClientRect();
-      const destX    = seatRect.left - contRect.left + seatRect.width / 2;
-      const seatTop  = seatRect.top  - contRect.top;
+      const cr       = container.getBoundingClientRect();
+      const sr       = seatEl.getBoundingClientRect();
+      const destX    = sr.left - cr.left + sr.width/2;
+      const seatTop  = sr.top  - cr.top;
+      const rowAbove = seatTop - 6;
 
-      // a few pixels above seat top
-      const rowAboveY = seatTop - 6;
+      drawArrow(entX, entY,      entX,      rowAbove);
+      drawArrow(entX, rowAbove,  destX,     rowAbove);
+      drawArrow(destX,rowAbove,  destX,     seatTop + sr.height/2);
 
-      // Draw: entrance→aisle (rowAboveY), aisle→col (rowAboveY), drop into seat
-      drawArrow(entX, entY,            entX,     rowAboveY);
-      drawArrow(entX, rowAboveY,       destX,    rowAboveY);
-      drawArrow(destX, rowAboveY,      destX,    seatTop + seatRect.height/2);
-
-      document.getElementById('message')
+      document.getElementById("message")
         .textContent = `✅ Guiding to seat ${seatId}`;
     }
 
-    // Button handler
-    document.getElementById('btnNavigate')
-      .addEventListener('click', () => {
-        const ticketID = document.getElementById('ticketIdInput').value.trim();
-        const res = loadReservations().find(r => r.id === ticketID);
+    document.getElementById("btnNavigate")
+      .addEventListener("click", () => {
+        const id = document.getElementById("ticketIdInput").value.trim();
+        const res = loadReservations().find(r => r.id===id);
         if (!res) {
-          document.getElementById('message').textContent = '❌ Ticket not found';
+          document.getElementById("message").textContent = "❌ Ticket not found";
           return;
         }
         navigateTo(res.seat);
