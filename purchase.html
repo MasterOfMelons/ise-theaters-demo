@@ -6,7 +6,8 @@
   <title>Purchase Ticket – ISE Theaters</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-
+    nav { text-align:center; margin:16px 0; }
+    nav a { margin:0 8px; text-decoration:none; }
     /* ===== Reservation Form Styles ===== */
     #reservation {
       max-width: 400px;
@@ -64,7 +65,7 @@
     #confirmation h3 { margin-top: 0; color: #155724; }
     #confirmation p  { margin: 8px 0; }
     #confirmation ul { list-style: none; padding-left: 0; }
-    #confirmation li{ margin-bottom: 6px; }
+    #confirmation li { margin-bottom: 6px; }
   </style>
 
   <!-- jsPDF for PDF generation -->
@@ -73,13 +74,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 <body>
-  <nav style="text-align:center; margin:16px 0;">
+  <nav>
     <a href="purchase.html">🎟️ Purchase Ticket</a> |
     <a href="manage.html">🛠️ Manage Reservation</a> |
     <a href="navigate.html">📍 Theater Navigate</a>
   </nav>
 
-  <!-- Reservation Form -->
+  <!-- ======================= Reservation Screen ======================= -->
   <div id="reservation">
     <h2>Purchase Movie Tickets</h2>
     <div class="form-group">
@@ -113,8 +114,9 @@
     </div>
   </div>
 
-  <!-- Seating Chart -->
+  <!-- ======================= Seating Chart Screen ======================= -->
   <div id="seating">
+    <!-- lockedHeader will be injected here if fromManage -->
     <h3>Select Your Seat</h3>
     <table>
       <thead>
@@ -169,7 +171,7 @@
     <button id="btnExitSeating">Exit</button>
   </div>
 
-  <!-- Confirmation -->
+  <!-- ======================= Confirmation Message ======================= -->
   <div id="confirmation">
     <h3>Thank you for your purchase! 🎉</h3>
     <p>Your ticket has been sent to your email!</p>
@@ -197,106 +199,172 @@
 
     // Read/write localStorage
     function loadReservations() {
-      const stored = localStorage.getItem("reservations");
-      if (!stored) return [];
-      try { return JSON.parse(stored); }
+      const s = localStorage.getItem("reservations");
+      try { return JSON.parse(s) || []; }
       catch { return []; }
     }
     function saveReservations(arr) {
       localStorage.setItem("reservations", JSON.stringify(arr));
     }
 
-    // Clear any old prefill
-    localStorage.removeItem("prefill");
-    localStorage.removeItem("fromManage");
+    // Disable seats already reserved
+    function disableReservedSeats() {
+      loadReservations()
+        .filter(r => r.movie === selectedMovie && r.time === selectedTime)
+        .forEach(r => {
+          const btn = document.querySelector(
+            `.seat-btn[data-seat="${r.seat}"]`
+          );
+          if (btn) {
+            btn.disabled = true;
+            btn.style.backgroundColor = "#6c757d";
+            btn.style.cursor = "not-allowed";
+            btn.title = "Reserved";
+          }
+        });
+    }
 
-    // Globals & DOM cache
-    let selectedMovie = "", selectedTime = "", userName = "", userEmail = "";
-    const movieSelect    = document.getElementById("movieSelect");
-    const timesGroup     = document.getElementById("timesGroup");
-    const userInfoGroup  = document.getElementById("userInfoGroup");
-    const btnProceed     = document.getElementById("btnProceed");
-    const btnCancel      = document.getElementById("btnCancel");
-    const seatingDiv     = document.getElementById("seating");
-    const seatButtons    = Array.from(document.querySelectorAll(".seat-btn"));
-    const btnExitSeating = document.getElementById("btnExitSeating");
-    const txtNameField   = document.getElementById("txtName");
-    const txtEmailField  = document.getElementById("txtEmail");
-    const confirmationDiv= document.getElementById("confirmation");
-    const confIDSpan     = document.getElementById("confID");
-    const confNameSpan   = document.getElementById("confName");
-    const confEmailSpan  = document.getElementById("confEmail");
-    const confMovieSpan  = document.getElementById("confMovie");
-    const confTimeSpan   = document.getElementById("confTime");
-    const confSeatSpan   = document.getElementById("confSeat");
+    // DOM Cache
+    const reservationDiv  = document.getElementById("reservation");
+    const movieSelect     = document.getElementById("movieSelect");
+    const timesGroup      = document.getElementById("timesGroup");
+    const userInfoGroup   = document.getElementById("userInfoGroup");
+    const btnProceed      = document.getElementById("btnProceed");
+    const btnCancel       = document.getElementById("btnCancel");
+    const seatingDiv      = document.getElementById("seating");
+    const seatButtons     = Array.from(document.querySelectorAll(".seat-btn"));
+    const btnExitSeating  = document.getElementById("btnExitSeating");
+    const txtNameField    = document.getElementById("txtName");
+    const txtEmailField   = document.getElementById("txtEmail");
+    const confirmationDiv = document.getElementById("confirmation");
+    const confIDSpan      = document.getElementById("confID");
+    const confNameSpan    = document.getElementById("confName");
+    const confEmailSpan   = document.getElementById("confEmail");
+    const confMovieSpan   = document.getElementById("confMovie");
+    const confTimeSpan    = document.getElementById("confTime");
+    const confSeatSpan    = document.getElementById("confSeat");
 
-    // 1) Show times when movie selected
+    // State
+    let selectedMovie = "",
+        selectedTime  = "",
+        userName      = "",
+        userEmail     = "";
+
+    // === Prefill from Manage → Add Seat ===
+    const prefillRaw = localStorage.getItem("prefill");
+    const fromManage = localStorage.getItem("fromManage") === "true";
+    if (prefillRaw && fromManage) {
+      const p = JSON.parse(prefillRaw);
+      selectedMovie = p.movie;
+      selectedTime  = p.time;
+      userName      = p.name;
+      userEmail     = p.email;
+
+      // Fill form values (though hidden)
+      movieSelect.value = selectedMovie;
+      timesGroup.style.display = "block";
+      document.querySelector(
+        `input[name="showtime"][value="${selectedTime}"]`
+      ).checked = true;
+      userInfoGroup.style.display = "block";
+      txtNameField.value  = userName;
+      txtEmailField.value = userEmail;
+
+      // Skip straight to seating
+      reservationDiv.style.display = "none";
+      seatingDiv.style.display     = "block";
+
+      // Inject a header so they know what they're adding to
+      const hdr = document.createElement("h3");
+      hdr.textContent = `Adding seat for ${selectedMovie} @ ${selectedTime}`;
+      seatingDiv.insertBefore(hdr, seatingDiv.firstChild);
+
+      localStorage.removeItem("fromManage");
+      disableReservedSeats();
+    }
+
+    // 1) Movie select → show times
     movieSelect.addEventListener("change", () => {
       selectedMovie = movieSelect.value;
       timesGroup.style.display    = "block";
       userInfoGroup.style.display = "none";
-      Array.from(document.getElementsByName("showtime"))
-           .forEach(r => r.checked = false);
+      document.getElementsByName("showtime").forEach(r => r.checked = false);
     });
 
-    // 2) Show user-info after time picked
-    Array.from(document.getElementsByName("showtime")).forEach(radio => {
+    // 2) Time select → show name/email
+    document.getElementsByName("showtime").forEach(radio => {
       radio.addEventListener("change", () => {
-        selectedTime        = radio.value;
+        selectedTime = radio.value;
         userInfoGroup.style.display = "block";
       });
     });
 
-    // 3) Cancel → refresh
+    // 3) Cancel → reload
     btnCancel.addEventListener("click", () => location.reload());
 
-    // 4) Proceed → seating chart
+    // 4) Proceed → seating
     btnProceed.addEventListener("click", () => {
       userName  = txtNameField.value.trim();
       userEmail = txtEmailField.value.trim();
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!userName)  return alert("Please enter your name.");
-      if (!userEmail) return alert("Please enter your email.");
-      if (!emailRegex.test(userEmail)) 
-        return alert("Please enter a valid email.");
+      if (!userName)  { alert("Please enter your name."); return; }
+      if (!userEmail) { alert("Please enter your email."); return; }
+      if (!emailRegex.test(userEmail)) {
+        alert("Please enter a valid email."); return;
+      }
       alert(`Please select your seat for ${selectedMovie} at ${selectedTime}.`);
-      document.getElementById("reservation").style.display = "none";
-      seatingDiv.style.display = "block";
+      reservationDiv.style.display = "none";
+      seatingDiv.style.display     = "block";
       disableReservedSeats();
     });
 
-    // 5) Seat-click → save, PDF+QR, confirmation
+    // 5) Seat click → save + PDF + QR + confirmation
     seatButtons.forEach(btn => btn.addEventListener("click", () => {
-      const seat    = btn.getAttribute("data-seat");
+      const seat    = btn.dataset.seat;
       const ticketID= generateTicketID();
 
-      // save
-      const res = { id:ticketID, name:userName, email:userEmail,
-                    movie:selectedMovie, time:selectedTime,
-                    seat, timestamp:new Date().toISOString() };
-      const all = loadReservations(); all.push(res); saveReservations(all);
+      // Save reservation
+      const reservation = {
+        id:        ticketID,
+        name:      userName,
+        email:     userEmail,
+        movie:     selectedMovie,
+        time:      selectedTime,
+        seat,
+        timestamp: new Date().toISOString(),
+      };
+      const all = loadReservations();
+      all.push(reservation);
+      saveReservations(all);
 
-      // PDF
+      // Generate PDF ticket
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation:"landscape", unit:"pt", format:[300,125] });
-      doc.setFillColor(20,20,20); doc.rect(0,0,300,125,"F");
-      doc.setFillColor(255,215,0); doc.rect(0,0,300,40,"F"); doc.rect(0,95,300,30,"F");
-      doc.setDrawColor(255,215,0); doc.setLineWidth(1); doc.setLineDash([3,2],0);
-      doc.line(0,95,300,95); doc.setLineDash();
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "pt",
+        format: [300, 125],
+      });
+      doc.setFillColor(20,20,20).rect(0,0,300,125,"F");
+      doc.setFillColor(255,215,0);
+      doc.rect(0,0,300,40,"F");
+      doc.rect(0,95,300,30,"F");
+      doc.setDrawColor(255,215,0).setLineWidth(1).setLineDash([3,2],0);
+      doc.line(0,95,300,95).setLineDash();
       doc.setFont("helvetica","bold").setFontSize(12).setTextColor(20,20,20)
          .text("ISE Theaters",150,16,{align:"center"})
-         .setFontSize(16).text("MOVIE TICKET",150,32,{align:"center"});
+         .setFontSize(16)
+         .text("MOVIE TICKET",150,32,{align:"center"});
       doc.setFontSize(10).setTextColor(255,215,0)
          .text(`Ticket ID: ${ticketID}`,15,60)
          .text(`Name:      ${userName}`,15,75)
          .text(`Movie:     ${selectedMovie}`,15,90)
          .text(`Time:      ${selectedTime}`,160,60)
          .text(`Seat:      ${seat}`,160,75);
-      const qr = new QRious({value:ticketID,size:50,level:"H"});
-      doc.addImage(qr.toDataURL(),"PNG",260,45,40,40);
+      const qr = new QRious({ value: ticketID, size: 50, level: "H" });
+      doc.addImage(qr.toDataURL(), "PNG", 260, 45, 40, 40);
       doc.save(`ticket_${ticketID}.pdf`);
 
-      // show confirmation
+      // Show confirmation UI
       confIDSpan.textContent    = ticketID;
       confNameSpan.textContent  = userName;
       confEmailSpan.textContent = userEmail;
@@ -307,22 +375,7 @@
       confirmationDiv.style.display = "block";
     }));
 
-    function disableReservedSeats() {
-      loadReservations()
-        .filter(r => r.movie===selectedMovie && r.time===selectedTime)
-        .forEach(r => {
-          const b = document.querySelector(`.seat-btn[data-seat="${r.seat}"]`);
-          if (b) {
-            b.disabled = true;
-            b.style.backgroundColor = "#6c757d";
-            b.style.cursor = "not-allowed";
-            b.setAttribute("title","Reserved");
-            b.setAttribute("aria-label","Reserved seat");
-          }
-        });
-    }
-
-    // 6) Exit seating resets page
+    // 6) Exit seating → reload
     btnExitSeating.addEventListener("click", () => location.reload());
   </script>
 </body>

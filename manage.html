@@ -6,12 +6,13 @@
   <title>Manage Reservations</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-    nav { text-align:center; margin:16px 0; }
+    nav { text-align: center; margin: 16px 0; }
     nav a { margin: 0 8px; text-decoration: none; }
     h2 { margin-bottom: 10px; }
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 6px; }
-    input[type="text"] {
+    input[type="text"],
+    input[type="file"] {
       width: 300px; padding: 8px; box-sizing: border-box;
       margin-right: 10px;
     }
@@ -47,8 +48,21 @@
   </nav>
 
   <h2>Manage Reservations</h2>
+
+  <!-- QR‐Scan Placeholder -->
   <div class="form-group">
-    <label for="searchInput">Enter Email or Ticket ID:</label>
+    <label for="qrInput">Scan Ticket QR Code:</label>
+    <input type="file" id="qrInput" accept="image/*" />
+    <!--
+      Hook your JS QR‐decoder to #qrInput and then:
+        localStorage.setItem("searchTerm", decodedID);
+        document.getElementById("searchInput").value = decodedID;
+        document.getElementById("btnSearch").click();
+    -->
+  </div>
+
+  <div class="form-group">
+    <label for="searchInput">Or enter Email or Ticket ID:</label>
     <input type="text" id="searchInput"
            placeholder="e.g. john@example.com or A1B2C3D4" />
     <button id="btnSearch">Search</button>
@@ -59,14 +73,11 @@
   <script>
     function loadReservations() {
       const s = localStorage.getItem("reservations");
-      if (!s) return [];
-      try { return JSON.parse(s); }
-      catch { return []; }
+      return s ? JSON.parse(s) : [];
     }
     function saveReservations(arr) {
       localStorage.setItem("reservations", JSON.stringify(arr));
     }
-
     function shouldDisplay(term) {
       const t = term.toLowerCase().trim();
       return r => r.email.toLowerCase() === t || r.id.toLowerCase() === t;
@@ -75,17 +86,19 @@
     function renderResults(arr) {
       const container = document.getElementById("results");
       container.innerHTML = "";
-      if (!arr || arr.length === 0) {
+      if (!arr.length) {
         container.innerHTML =
           '<div class="no-results">No matching reservations found.</div>';
         return;
       }
+
       const table = document.createElement("table");
       const thead = document.createElement("thead");
       const headerRow = document.createElement("tr");
       ["Ticket ID","Name","Email","Movie","Showtime","Seat","Booked At","Actions"]
         .forEach(text => {
-          const th = document.createElement("th"); th.textContent = text;
+          const th = document.createElement("th");
+          th.textContent = text;
           headerRow.appendChild(th);
         });
       thead.appendChild(headerRow);
@@ -94,44 +107,52 @@
       const tbody = document.createElement("tbody");
       arr.forEach(res => {
         const tr = document.createElement("tr");
+
+        // Data cells
         ["id","name","email","movie","time","seat"].forEach(key => {
           const td = document.createElement("td");
           td.textContent = res[key];
           tr.appendChild(td);
         });
-        // timestamp
+
+        // Timestamp
         const tdTime = document.createElement("td");
         tdTime.textContent = new Date(res.timestamp).toLocaleString();
         tr.appendChild(tdTime);
 
-        // actions
+        // Actions
         const tdAct = document.createElement("td");
-        // cancel
+
+        // — Cancel —
         const cancelBtn = document.createElement("button");
         cancelBtn.textContent = "Cancel";
         cancelBtn.className = "action-btn cancel-btn";
         cancelBtn.addEventListener("click", () => {
-          if (!confirm(`Cancel ticket ${res.id} for seat ${res.seat}?`)) return;
+          if (!confirm(`Cancel ticket ${res.id} for seat ${res.seat}?`))
+            return;
           alert("✅ Your ticket has been canceled.\n💸 A refund will be issued.");
-          const all = loadReservations();
-          const updated = all.filter(r => r.id !== res.id);
+          const updated = loadReservations().filter(r => r.id !== res.id);
           saveReservations(updated);
-          renderResults(updated.filter(shouldDisplay(
-            document.getElementById("searchInput").value
-          )));
+          renderResults(updated.filter(
+            shouldDisplay(document.getElementById("searchInput").value)
+          ));
         });
         tdAct.appendChild(cancelBtn);
 
-        // add seat
+        // — Add Seat —
         const addBtn = document.createElement("button");
         addBtn.textContent = "Add Seat";
         addBtn.className = "action-btn add-seat-btn";
         addBtn.addEventListener("click", () => {
+          // Prefill ID + details into purchase.html
           localStorage.setItem("prefill", JSON.stringify({
-            name: res.name, email: res.email,
-            movie: res.movie, time: res.time
+            id:    res.id,
+            name:  res.name,
+            email: res.email,
+            movie: res.movie,
+            time:  res.time
           }));
-          localStorage.setItem("fromManage","true");
+          localStorage.setItem("fromManage", "true");
           window.location.href = "purchase.html";
         });
         tdAct.appendChild(addBtn);
