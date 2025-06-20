@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Movie Ticket Reservation</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+
+    /* ===== Reservation Form Styles ===== */
+    #reservation {
+      max-width: 400px;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 6px;
+      margin-bottom: 30px;
+    }
+    #reservation h2 { margin-top: 0; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 6px; }
+    select, input[type="text"], input[type="email"] {
+      width: 100%; padding: 8px; box-sizing: border-box;
+    }
+    .radio-group { margin-top: 6px; }
+    .radio-group label { display: inline-block; margin-right: 15px; }
+    button {
+      padding: 10px 18px; cursor: pointer;
+      border: none; border-radius: 4px; font-size: 14px;
+    }
+    #btnProceed { background-color: #28a745; color: white; margin-right: 10px; }
+    #btnCancel  { background-color: #dc3545; color: white; }
+
+    /* ===== Seating Chart Styles ===== */
+    #seating { display: none; }
+    #seating h3 { margin-top: 0; text-align: center; }
+    .screen-label {
+      text-align: center; margin-top: 10px; font-weight: bold;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 20px auto;
+    }
+    th, td {
+      border: 1px solid #999; padding: 4px; text-align: center;
+    }
+    th { background-color: #f0f0f0; }
+    .seat-btn {
+      width: 50px; height: 50px;
+      background-color: #007bff; color: white;
+      border: none; border-radius: 4px; font-weight: bold;
+    }
+    .seat-btn:hover { background-color: #0056b3; }
+    #btnExitSeating {
+      display: block; margin: 20px auto 0;
+      background-color: #dc3545; color: white;
+    }
+
+    /* ===== Confirmation Message ===== */
+    #confirmation {
+      display: none; max-width: 500px; margin: 20px auto;
+      border: 1px solid #28a745; padding: 20px;
+      border-radius: 6px; background-color: #f0fff0;
+    }
+    #confirmation h3 { margin-top: 0; color: #155724; }
+    #confirmation p  { margin: 8px 0; }
+    #confirmation ul { list-style: none; padding-left: 0; }
+    #confirmation li{ margin-bottom: 6px; }
+  </style>
+
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- QRious for QR-code generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+</head>
+<body>
+  <nav style="text-align:center; margin:16px 0;">
+    <a href="index.html">🎟️ Purchase Ticket</a> |
+    <a href="manage.html">🛠️ Manage Reservation</a> |
+    <a href="navigate.html">📍 Theater Navigate</a>
+  </nav>
+
+  <!-- Reservation Form -->
+  <div id="reservation">
+    <h2>Purchase Movie Tickets</h2>
+    <div class="form-group">
+      <label for="movieSelect">Select Desired Movie</label>
+      <select id="movieSelect">
+        <option value="" disabled selected>-- choose a movie --</option>
+        <option>Guardians of the Galaxy Vol. 3</option>
+        <option>The Super Mario Bros. Movie</option>
+        <option>Creed III</option>
+      </select>
+    </div>
+    <div class="form-group" id="timesGroup" style="display:none;">
+      <label>Select Show Time</label>
+      <div class="radio-group">
+        <label><input type="radio" name="showtime" value="10:00 AM" /> 10:00 AM</label>
+        <label><input type="radio" name="showtime" value="2:00 PM"  /> 2:00 PM</label>
+        <label><input type="radio" name="showtime" value="6:00 PM"  /> 6:00 PM</label>
+      </div>
+    </div>
+    <div id="userInfoGroup" style="display:none;">
+      <div class="form-group">
+        <label for="txtName">First and Last Name:</label>
+        <input type="text" id="txtName" placeholder="Your full name" />
+      </div>
+      <div class="form-group">
+        <label for="txtEmail">Email Address:</label>
+        <input type="email" id="txtEmail" placeholder="you@example.com" />
+      </div>
+      <button id="btnProceed">Proceed</button>
+      <button id="btnCancel">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Seating Chart -->
+  <div id="seating">
+    <h3>Select Your Seat</h3>
+    <table>
+      <thead>
+        <tr>
+          <th></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+          <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong></td>
+          <td><button class="seat-btn" data-seat="A1">A1</button></td>
+          <td><button class="seat-btn" data-seat="A2">A2</button></td>
+          <td><button class="seat-btn" data-seat="A3">A3</button></td>
+          <td><button class="seat-btn" data-seat="A4">A4</button></td>
+          <td><button class="seat-btn" data-seat="A5">A5</button></td>
+          <td><button class="seat-btn" data-seat="A6">A6</button></td>
+          <td><button class="seat-btn" data-seat="A7">A7</button></td>
+          <td><button class="seat-btn" data-seat="A8">A8</button></td>
+          <td><button class="seat-btn" data-seat="A9">A9</button></td>
+          <td><button class="seat-btn" data-seat="A10">A10</button></td>
+        </tr>
+        <tr>
+          <td><strong>B</strong></td>
+          <td><button class="seat-btn" data-seat="B1">B1</button></td>
+          <td><button class="seat-btn" data-seat="B2">B2</button></td>
+          <td><button class="seat-btn" data-seat="B3">B3</button></td>
+          <td><button class="seat-btn" data-seat="B4">B4</button></td>
+          <td><button class="seat-btn" data-seat="B5">B5</button></td>
+          <td><button class="seat-btn" data-seat="B6">B6</button></td>
+          <td><button class="seat-btn" data-seat="B7">B7</button></td>
+          <td><button class="seat-btn" data-seat="B8">B8</button></td>
+          <td><button class="seat-btn" data-seat="B9">B9</button></td>
+          <td><button class="seat-btn" data-seat="B10">B10</button></td>
+        </tr>
+        <tr>
+          <td><strong>C</strong></td>
+          <td><button class="seat-btn" data-seat="C1">C1</button></td>
+          <td><button class="seat-btn" data-seat="C2">C2</button></td>
+          <td><button class="seat-btn" data-seat="C3">C3</button></td>
+          <td><button class="seat-btn" data-seat="C4">C4</button></td>
+          <td><button class="seat-btn" data-seat="C5">C5</button></td>
+          <td><button class="seat-btn" data-seat="C6">C6</button></td>
+          <td><button class="seat-btn" data-seat="C7">C7</button></td>
+          <td><button class="seat-btn" data-seat="C8">C8</button></td>
+          <td><button class="seat-btn" data-seat="C9">C9</button></td>
+          <td><button class="seat-btn" data-seat="C10">C10</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="screen-label">The screen is at the top</div>
+    <button id="btnExitSeating">Exit</button>
+  </div>
+
+  <!-- Confirmation -->
+  <div id="confirmation">
+    <h3>Thank you for your purchase! 🎉</h3>
+    <p>Your ticket has been sent to your email!</p>
+    <p><strong>Current Ticket Info:</strong></p>
+    <ul>
+      <li><strong>Ticket ID:</strong> <span id="confID"></span></li>
+      <li><strong>Name:</strong> <span id="confName"></span></li>
+      <li><strong>Email:</strong> <span id="confEmail"></span></li>
+      <li><strong>Movie:</strong> <span id="confMovie"></span></li>
+      <li><strong>Showtime:</strong> <span id="confTime"></span></li>
+      <li><strong>Seat:</strong> <span id="confSeat"></span></li>
+    </ul>
+  </div>
+
+  <script>
+    // Generate random 8-char ID
+    function generateTicketID(length = 8) {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let result = "";
+      for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+
+    // Read/write localStorage
+    function loadReservations() {
+      const stored = localStorage.getItem("reservations");
+      if (!stored) return [];
+      try { return JSON.parse(stored); }
+      catch { return []; }
+    }
+    function saveReservations(arr) {
+      localStorage.setItem("reservations", JSON.stringify(arr));
+    }
+
+    // Clear any old prefill
+    localStorage.removeItem("prefill");
+    localStorage.removeItem("fromManage");
+
+    // Globals & DOM cache
+    let selectedMovie = "", selectedTime = "", userName = "", userEmail = "";
+    const movieSelect    = document.getElementById("movieSelect");
+    const timesGroup     = document.getElementById("timesGroup");
+    const userInfoGroup  = document.getElementById("userInfoGroup");
+    const btnProceed     = document.getElementById("btnProceed");
+    const btnCancel      = document.getElementById("btnCancel");
+    const seatingDiv     = document.getElementById("seating");
+    const seatButtons    = Array.from(document.querySelectorAll(".seat-btn"));
+    const btnExitSeating = document.getElementById("btnExitSeating");
+    const txtNameField   = document.getElementById("txtName");
+    const txtEmailField  = document.getElementById("txtEmail");
+    const confirmationDiv= document.getElementById("confirmation");
+    const confIDSpan     = document.getElementById("confID");
+    const confNameSpan   = document.getElementById("confName");
+    const confEmailSpan  = document.getElementById("confEmail");
+    const confMovieSpan  = document.getElementById("confMovie");
+    const confTimeSpan   = document.getElementById("confTime");
+    const confSeatSpan   = document.getElementById("confSeat");
+
+    // 1) Show times when movie selected
+    movieSelect.addEventListener("change", () => {
+      selectedMovie = movieSelect.value;
+      timesGroup.style.display    = "block";
+      userInfoGroup.style.display = "none";
+      Array.from(document.getElementsByName("showtime"))
+           .forEach(r => r.checked = false);
+    });
+
+    // 2) Show user-info after time picked
+    Array.from(document.getElementsByName("showtime")).forEach(radio => {
+      radio.addEventListener("change", () => {
+        selectedTime        = radio.value;
+        userInfoGroup.style.display = "block";
+      });
+    });
+
+    // 3) Cancel → refresh
+    btnCancel.addEventListener("click", () => location.reload());
+
+    // 4) Proceed → seating chart
+    btnProceed.addEventListener("click", () => {
+      userName  = txtNameField.value.trim();
+      userEmail = txtEmailField.value.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!userName)  return alert("Please enter your name.");
+      if (!userEmail) return alert("Please enter your email.");
+      if (!emailRegex.test(userEmail)) 
+        return alert("Please enter a valid email.");
+      alert(`Please select your seat for ${selectedMovie} at ${selectedTime}.`);
+      document.getElementById("reservation").style.display = "none";
+      seatingDiv.style.display = "block";
+      disableReservedSeats();
+    });
+
+    // 5) Seat-click → save, PDF+QR, confirmation
+    seatButtons.forEach(btn => btn.addEventListener("click", () => {
+      const seat    = btn.getAttribute("data-seat");
+      const ticketID= generateTicketID();
+
+      // save
+      const res = { id:ticketID, name:userName, email:userEmail,
+                    movie:selectedMovie, time:selectedTime,
+                    seat, timestamp:new Date().toISOString() };
+      const all = loadReservations(); all.push(res); saveReservations(all);
+
+      // PDF
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation:"landscape", unit:"pt", format:[300,125] });
+      doc.setFillColor(20,20,20); doc.rect(0,0,300,125,"F");
+      doc.setFillColor(255,215,0); doc.rect(0,0,300,40,"F"); doc.rect(0,95,300,30,"F");
+      doc.setDrawColor(255,215,0); doc.setLineWidth(1); doc.setLineDash([3,2],0);
+      doc.line(0,95,300,95); doc.setLineDash();
+      doc.setFont("helvetica","bold").setFontSize(12).setTextColor(20,20,20)
+         .text("ISE Theaters",150,16,{align:"center"})
+         .setFontSize(16).text("MOVIE TICKET",150,32,{align:"center"});
+      doc.setFontSize(10).setTextColor(255,215,0)
+         .text(`Ticket ID: ${ticketID}`,15,60)
+         .text(`Name:      ${userName}`,15,75)
+         .text(`Movie:     ${selectedMovie}`,15,90)
+         .text(`Time:      ${selectedTime}`,160,60)
+         .text(`Seat:      ${seat}`,160,75);
+      const qr = new QRious({value:ticketID,size:50,level:"H"});
+      doc.addImage(qr.toDataURL(),"PNG",260,45,40,40);
+      doc.save(`ticket_${ticketID}.pdf`);
+
+      // show confirmation
+      confIDSpan.textContent    = ticketID;
+      confNameSpan.textContent  = userName;
+      confEmailSpan.textContent = userEmail;
+      confMovieSpan.textContent = selectedMovie;
+      confTimeSpan.textContent  = selectedTime;
+      confSeatSpan.textContent  = seat;
+      seatingDiv.style.display      = "none";
+      confirmationDiv.style.display = "block";
+    }));
+
+    function disableReservedSeats() {
+      loadReservations()
+        .filter(r => r.movie===selectedMovie && r.time===selectedTime)
+        .forEach(r => {
+          const b = document.querySelector(`.seat-btn[data-seat="${r.seat}"]`);
+          if (b) {
+            b.disabled = true;
+            b.style.backgroundColor = "#6c757d";
+            b.style.cursor = "not-allowed";
+            b.setAttribute("title","Reserved");
+            b.setAttribute("aria-label","Reserved seat");
+          }
+        });
+    }
+
+    // 6) Exit seating resets page
+    btnExitSeating.addEventListener("click", () => location.reload());
+  </script>
+</body>
+</html>
