@@ -286,7 +286,7 @@ button:hover {
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/* *NEW* fallback for swapChart when no <thead> is used: */
+/* Fallback for swapChart when no <thead> is used: */
 #swapChart tr:first-child th {
   background: #2e2e2e;
   color: #4caf50;
